@@ -29,6 +29,7 @@ type Kafkabeat struct {
 	groups     [] string
 	zookeepers    [] string
 	brokers [] string
+	create_topic_docs bool
 }
 
 // Creates beater
@@ -80,7 +81,9 @@ func (bt *Kafkabeat) Config(b *beat.Beat) error {
 		return err
 	}
 	bt.topics = bt.beatConfig.Kafkabeat.Topics
+	bt.create_topic_docs=true
 	if bt.topics == nil || len(bt.topics) == 0 {
+		bt.create_topic_docs = bt.topics == nil
 		bt.topics,err = client.Topics()
 	}
 	if err != nil {
@@ -123,9 +126,12 @@ func (bt *Kafkabeat) Run(b *beat.Beat) error {
 			return nil
 		case <-ticker.C:
 			for _, topic := range bt.topics {
-				pid_sizes,err := processTopic(topic,b)
+				pids,err := processTopic(topic)
 				if err == nil {
-					events:=processGroups(bt.groups,topic,pid_sizes)
+					if bt.create_topic_docs {
+						publishTopicDocs(topic, pids,b)
+					}
+					events:=processGroups(bt.groups,topic, pids)
 					if events !=nil && len(events) > 0 {
 						b.Events.PublishEvents(events)
 					}
@@ -135,31 +141,33 @@ func (bt *Kafkabeat) Run(b *beat.Beat) error {
 	}
 }
 
-func processTopic(topic string,b *beat.Beat) (map[int32]int64,error){
+func processTopic(topic string) (map[int32]int64,error){
 	pids, err := client.Partitions(topic)
 	if err != nil {
 		logp.Err("Unable to retrieve paritions for topic %v",topic)
 		return nil,err
 	}
 	logp.Info("Partitions retrieved for topic %v",topic)
-	pid_sizes := getPartitionSizes(topic, pids)
-	events:=make([]common.MapStr,len(pid_sizes))
-	counter:=0
-	for pid,size := range pid_sizes {
+	return getPartitionSizes(topic, pids), nil
+}
+
+func publishTopicDocs(topic string,pids map[int32]int64,b *beat.Beat){
+	events := make([]common.MapStr, len(pids))
+	counter := 0
+	for pid, size := range pids {
 		events[counter] = common.MapStr{
 			"@timestamp": common.Time(time.Now()),
 			"type": "topic",
 			"partition": pid,
 			"topic":topic,
-			"logSize": size,
+			"size": size,
 		}
 		counter++
 	}
 	if len(events) > 0 {
 		b.Events.PublishEvents(events)
-		logp.Info("%v Events sent",len(events))
+		logp.Info("%v Events sent", len(events))
 	}
-	return pid_sizes,nil
 }
 
 

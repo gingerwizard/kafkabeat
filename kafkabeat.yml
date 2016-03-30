@@ -5,10 +5,10 @@
 kafkabeat:
   # Defines how often an event is sent to the output and how often kafka is polled
   period: 5s
-  # The topics to monitor. 
+  # The topics to monitor. It not specified, all topics will be monitored. An empty list equates to no topic documents.
   topics: ["diffusion"]
   # Defines the consumer group to monitor. If not specified, all consumer groups will be monitored. Empty list equates to no groups.
-  #groups: []
+  groups: []
   # Brokers to connect
   zookeepers: ["localhost:2181"]###############################################################################
 ############################# Libbeat Config ##################################
