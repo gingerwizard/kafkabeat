@@ -1,0 +1,7 @@
+1. Return topic sizes even with no consumers
+2. Monitor all topics if empty
+3. Monitor all consumers if empty - how to monitor no consumers? True/Fasle flag
+4. What if we are montioring all and more groups/consumers get added?
+
+Heartbeat docs? for brokers?
+Size of data on disk

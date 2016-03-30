@@ -1,0 +1,17 @@
+package: .
+import:
+- package: github.com/elastic/beats
+  version: d8ca37efa8888ce624e2cfaa90107e79fd41be1e
+  subpackages:
+  - /libbeat/beat
+  - libbeat/cfgfile
+  - libbeat/common
+  - libbeat/logp
+- package: github.com/Shopify/sarama
+- package: github.com/davecgh/go-spew/spew
+- package: github.com/eapache/go-resiliency/breaker
+- package: github.com/eapache/queue
+- package: github.com/golang/snappy
+- package: github.com/klauspost/crc32
+- package: github.com/wvanbergen/kazoo-go
+- package: github.com/samuel/go-zookeeper/zk

@@ -1,0 +1,4 @@
+beat_name: kafkabeat
+beat_url: 'https://github.com/gingerwizard'
+beat_repo: 'github.com/gingerwizard'
+beat_description: Sends kafkabeat metrics to Logstash or directly to Elasticsearch.

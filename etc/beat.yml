@@ -1,0 +1,13 @@
+################### Kafkabeat Configuration Example #########################
+
+############################# Kafkabeat ######################################
+
+kafkabeat:
+  # Defines how often an event is sent to the output and how often kafka is polled
+  period: 1s
+  # The topics to monitor
+  topics: ["test"]
+  # Defines the consumer group to monitor. Required.
+  group: ""
+  # Brokers to connect
+  brokers: ["localhost:9001"]
