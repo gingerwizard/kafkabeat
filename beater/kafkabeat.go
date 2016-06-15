@@ -5,6 +5,7 @@ import (
 	"time"
 	"strconv"
 	"github.com/elastic/beats/libbeat/beat"
+        "github.com/elastic/beats/libbeat/publisher"
 	"github.com/elastic/beats/libbeat/cfgfile"
 	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
@@ -24,6 +25,7 @@ type Kafkabeat struct {
 	beatConfig *config.Config
 	done       chan struct{}
 	period     time.Duration
+        events     publisher.Client
 
 	topics     [] string
 	groups     [] string
@@ -114,8 +116,11 @@ func getGroups() ([]string,error) {
 
 
 func (bt *Kafkabeat) Setup(b *beat.Beat) error {
-	return nil
+        bt.events = b.Publisher.Connect()
+        bt.done = make(chan struct{})
+        return nil
 }
+
 
 func (bt *Kafkabeat) Run(b *beat.Beat) error {
 	logp.Info("kafkabeat is running! Hit CTRL-C to stop it.")
@@ -129,11 +134,11 @@ func (bt *Kafkabeat) Run(b *beat.Beat) error {
 				pids,err := processTopic(topic)
 				if err == nil {
 					if bt.create_topic_docs {
-						publishTopicDocs(topic, pids,b)
+						publishTopicDocs(bt, topic, pids,b)
 					}
 					events:=processGroups(bt.groups,topic, pids)
 					if events !=nil && len(events) > 0 {
-						b.Events.PublishEvents(events)
+						bt.events.PublishEvents(events)
 					}
 				}
 			}
@@ -151,7 +156,7 @@ func processTopic(topic string) (map[int32]int64,error){
 	return getPartitionSizes(topic, pids), nil
 }
 
-func publishTopicDocs(topic string,pids map[int32]int64,b *beat.Beat){
+func publishTopicDocs(bt *Kafkabeat,topic string,pids map[int32]int64,b *beat.Beat){
 	events := make([]common.MapStr, len(pids))
 	counter := 0
 	for pid, size := range pids {
@@ -165,7 +170,7 @@ func publishTopicDocs(topic string,pids map[int32]int64,b *beat.Beat){
 		counter++
 	}
 	if len(events) > 0 {
-		b.Events.PublishEvents(events)
+		bt.events.PublishEvents(events)
 		logp.Info("%v Events sent", len(events))
 	}
 }
